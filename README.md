@@ -23,4 +23,4 @@ Theese streams are implemented in the app (not all might be supported by your de
 
 ## Screenshots
 
-![Screenshot](/screenshot.png)
+![Screenshot](/screenshot1.png)
