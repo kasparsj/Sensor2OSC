@@ -1,12 +1,14 @@
 package com.polar.androidblesdk
 
 import android.Manifest
+import android.content.Context
 import android.content.DialogInterface
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.text.InputType
 import android.util.Log
+import android.util.Patterns
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -17,26 +19,24 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.util.Pair
 import com.google.android.material.snackbar.Snackbar
+import com.illposed.osc.OSCMessage
+import com.illposed.osc.OSCPortOut
 import com.polar.sdk.api.PolarBleApi
 import com.polar.sdk.api.PolarBleApi.DeviceStreamingFeature
 import com.polar.sdk.api.PolarBleApiCallback
 import com.polar.sdk.api.PolarBleApiDefaultImpl
 import com.polar.sdk.api.errors.PolarInvalidArgument
 import com.polar.sdk.api.model.*
-
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.functions.Function
-import java.util.*
-
-import android.util.Patterns
-import com.illposed.osc.OSCMessage
-import com.illposed.osc.OSCPortOut
 import java.net.InetAddress
 import java.net.SocketException
-import kotlin.collections.ArrayList
+import java.util.*
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 class MainActivity : AppCompatActivity() {
     companion object {
@@ -44,14 +44,14 @@ class MainActivity : AppCompatActivity() {
         private const val API_LOGGER_TAG = "API LOGGER"
         private const val PERMISSION_REQUEST_CODE = 1
         private const val ZERO_IP = "0.0.0.0"
-        private const val DEFAULT_OSC_PORT = 57120;
+        private const val DEFAULT_OSC_PORT = 57120
+        private const val DEFAULT_POLAR_ID = "7E37D222"
+        private const val DEVICE_ID = 0
     }
 
-    // ATTENTION! Replace with the device ID from your device.
-    //private var deviceId = "8C4CAD2D"
-    private var deviceId = "7E37D222"
-    private var oscIp: String = ZERO_IP;
-    private var oscPort: Int = DEFAULT_OSC_PORT;
+    private var polarId = DEFAULT_POLAR_ID
+    private var oscIp: String = ZERO_IP
+    private var oscPort: Int = DEFAULT_OSC_PORT
 
     private val api: PolarBleApi by lazy {
         // Notice PolarBleApi.ALL_FEATURES are enabled
@@ -143,9 +143,9 @@ class MainActivity : AppCompatActivity() {
 
             override fun deviceConnected(polarDeviceInfo: PolarDeviceInfo) {
                 Log.d(TAG, "CONNECTED: " + polarDeviceInfo.deviceId)
-                deviceId = polarDeviceInfo.deviceId
+                setPolarId(polarDeviceInfo.deviceId)
                 deviceConnected = true
-                val buttonText = getString(R.string.disconnect_from_device, deviceId)
+                val buttonText = getString(R.string.disconnect_from_device, polarId)
                 toggleButtonDown(connectButton, buttonText)
             }
 
@@ -156,7 +156,7 @@ class MainActivity : AppCompatActivity() {
             override fun deviceDisconnected(polarDeviceInfo: PolarDeviceInfo) {
                 Log.d(TAG, "DISCONNECTED: " + polarDeviceInfo.deviceId)
                 deviceConnected = false
-                val buttonText = getString(R.string.connect_to_device, deviceId)
+                val buttonText = getString(R.string.connect_to_device, polarId)
                 toggleButtonUp(connectButton, buttonText)
                 toggleButtonUp(toggleSdkModeButton, R.string.enable_sdk_mode)
             }
@@ -191,6 +191,8 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
+        val sharedPref = getPreferences(Context.MODE_PRIVATE) ?: return
+        oscIp = sharedPref.getString(getString(R.string.saved_osc_ip_key), oscIp).toString()
         setOscIpButton.text = getString(R.string.set_osc_ip, oscIp)
         setOscIpButton.setOnClickListener {
             val builder: AlertDialog.Builder = androidx.appcompat.app.AlertDialog.Builder(this)
@@ -214,27 +216,30 @@ class MainActivity : AppCompatActivity() {
             builder.show()
         }
 
-        setOscPortButton.text = getString(R.string.set_osc_port, oscPort)
+        oscPort = sharedPref.getInt(getString(R.string.saved_osc_port_key), oscPort)
+        setOscPortButton.text = getString(R.string.set_osc_port, Integer.toString(oscPort))
         setOscPortButton.setOnClickListener {
             val builder: AlertDialog.Builder = androidx.appcompat.app.AlertDialog.Builder(this)
-            builder.setTitle("Enter IP address")
+            builder.setTitle("Enter port number")
 
             val input = EditText(this)
-            input.setHint(DEFAULT_OSC_PORT)
-            if (oscPort != DEFAULT_OSC_PORT) {
-                input.setText(oscPort)
-                setOscPortButton.text = getString(R.string.set_osc_port, oscPort)
-                initSender(oscIp, oscPort)
-            }
+            input.setHint(Integer.toString(DEFAULT_OSC_PORT))
+            input.setText(Integer.toString(oscPort))
             input.inputType = InputType.TYPE_CLASS_TEXT
             builder.setView(input)
 
             builder.setPositiveButton("OK", DialogInterface.OnClickListener { dialog, which ->
                 oscPort = Integer.parseInt(input.text.toString())
+                setOscPortButton.text = getString(R.string.set_osc_port, Integer.toString(oscPort))
+                initSender(oscIp, oscPort)
             })
             builder.setNegativeButton("Cancel", DialogInterface.OnClickListener { dialog, which -> dialog.cancel() })
 
             builder.show()
+        }
+
+        if (oscIp != ZERO_IP && oscPort > 0) {
+            initSender(oscIp, oscPort)
         }
 
         broadcastButton.setOnClickListener {
@@ -257,22 +262,39 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        connectButton.text = getString(R.string.connect_to_device, deviceId)
+        polarId = sharedPref.getString(getString(R.string.saved_polar_id_key), polarId).toString()
+        connectButton.text = getString(R.string.connect_to_device, polarId)
         connectButton.setOnClickListener {
-            try {
-                if (deviceConnected) {
-                    api.disconnectFromDevice(deviceId)
-                } else {
-                    api.connectToDevice(deviceId)
+            val builder: AlertDialog.Builder = androidx.appcompat.app.AlertDialog.Builder(this)
+            builder.setTitle("Enter Polar ID")
+
+            val input = EditText(this)
+            input.setHint(DEFAULT_POLAR_ID)
+            input.setText(polarId)
+            input.inputType = InputType.TYPE_CLASS_TEXT
+            builder.setView(input)
+
+            builder.setPositiveButton("OK", DialogInterface.OnClickListener { dialog, which ->
+                setPolarId(input.text.toString())
+                connectButton.text = getString(R.string.connect_to_device, polarId)
+                try {
+                    if (deviceConnected) {
+                        api.disconnectFromDevice(polarId)
+                    } else {
+                        api.connectToDevice(polarId)
+                    }
+                } catch (polarInvalidArgument: PolarInvalidArgument) {
+                    val attempt = if (deviceConnected) {
+                        "disconnect"
+                    } else {
+                        "connect"
+                    }
+                    Log.e(TAG, "Failed to $attempt. Reason $polarInvalidArgument ")
                 }
-            } catch (polarInvalidArgument: PolarInvalidArgument) {
-                val attempt = if (deviceConnected) {
-                    "disconnect"
-                } else {
-                    "connect"
-                }
-                Log.e(TAG, "Failed to $attempt. Reason $polarInvalidArgument ")
-            }
+            })
+            builder.setNegativeButton("Cancel", DialogInterface.OnClickListener { dialog, which -> dialog.cancel() })
+
+            builder.show()
         }
 
         autoConnectButton.setOnClickListener {
@@ -312,9 +334,9 @@ class MainActivity : AppCompatActivity() {
             val isDisposed = ecgDisposable?.isDisposed ?: true
             if (isDisposed) {
                 toggleButtonDown(ecgButton, R.string.stop_ecg_stream)
-                ecgDisposable = requestStreamSettings(deviceId, DeviceStreamingFeature.ECG)
+                ecgDisposable = requestStreamSettings(polarId, DeviceStreamingFeature.ECG)
                     .flatMap { settings: PolarSensorSetting ->
-                        api.startEcgStreaming(deviceId, settings)
+                        api.startEcgStreaming(polarId, settings)
                     }
                     .subscribe(
                         { polarEcgData: PolarEcgData ->
@@ -340,19 +362,30 @@ class MainActivity : AppCompatActivity() {
             val isDisposed = accDisposable?.isDisposed ?: true
             if (isDisposed) {
                 toggleButtonDown(accButton, R.string.stop_acc_stream)
-                accDisposable = requestStreamSettings(deviceId, DeviceStreamingFeature.ACC)
+                accDisposable = requestStreamSettings(polarId, DeviceStreamingFeature.ACC)
                     .flatMap { settings: PolarSensorSetting ->
-                        api.startAccStreaming(deviceId, settings)
+                        api.startAccStreaming(polarId, settings)
                     }
                     //.observeOn(AndroidSchedulers.mainThread())
                     .subscribe(
                         { polarAccelerometerData: PolarAccelerometerData ->
                             val samples = arrayListOf<Int>()
+                            val eulers = arrayListOf<Float>()
                             for (data in polarAccelerometerData.samples) {
                                 Log.d(TAG, "ACC    x: ${data.x} y:  ${data.y} z: ${data.z}")
                                 samples.addAll(listOf(data.x, data.y, data.z))
+                                val roll = kotlin.math.atan2(
+                                    data.y.toFloat(),
+                                    sqrt(data.x.toFloat().pow(2) + data.z.toFloat().pow(2))
+                                )
+                                val pitch = kotlin.math.atan2(
+                                    data.x.toFloat(),
+                                    sqrt(data.y.toFloat().pow(2) + data.z.toFloat().pow(2))
+                                )
+                                eulers.addAll(arrayListOf<Float>(roll, pitch, 0.0F))
                             }
                             sendMessage("/polar/acc", samples)
+                            sendMessage("/polar/euler", eulers)
                         },
                         { error: Throwable ->
                             toggleButtonUp(accButton, R.string.start_acc_stream)
@@ -375,9 +408,9 @@ class MainActivity : AppCompatActivity() {
             if (isDisposed) {
                 toggleButtonDown(gyrButton, R.string.stop_gyro_stream)
                 gyrDisposable =
-                    requestStreamSettings(deviceId, DeviceStreamingFeature.GYRO)
+                    requestStreamSettings(polarId, DeviceStreamingFeature.GYRO)
                         .flatMap { settings: PolarSensorSetting ->
-                            api.startGyroStreaming(deviceId, settings)
+                            api.startGyroStreaming(polarId, settings)
                         }
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
@@ -405,9 +438,9 @@ class MainActivity : AppCompatActivity() {
             if (isDisposed) {
                 toggleButtonDown(magButton, R.string.stop_mag_stream)
                 magDisposable =
-                    requestStreamSettings(deviceId, DeviceStreamingFeature.MAGNETOMETER)
+                    requestStreamSettings(polarId, DeviceStreamingFeature.MAGNETOMETER)
                         .flatMap { settings: PolarSensorSetting ->
-                            api.startMagnetometerStreaming(deviceId, settings)
+                            api.startMagnetometerStreaming(polarId, settings)
                         }
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
@@ -435,9 +468,9 @@ class MainActivity : AppCompatActivity() {
             if (isDisposed) {
                 toggleButtonDown(ppgButton, R.string.stop_ppg_stream)
                 ppgDisposable =
-                    requestStreamSettings(deviceId, DeviceStreamingFeature.PPG)
+                    requestStreamSettings(polarId, DeviceStreamingFeature.PPG)
                         .flatMap { settings: PolarSensorSetting ->
-                            api.startOhrStreaming(deviceId, settings)
+                            api.startOhrStreaming(polarId, settings)
                         }
                         .subscribe(
                             { polarOhrPPGData: PolarOhrData ->
@@ -465,7 +498,7 @@ class MainActivity : AppCompatActivity() {
             val isDisposed = ppiDisposable?.isDisposed ?: true
             if (isDisposed) {
                 toggleButtonDown(ppiButton, R.string.stop_ppi_stream)
-                ppiDisposable = api.startOhrPPIStreaming(deviceId)
+                ppiDisposable = api.startOhrPPIStreaming(polarId)
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(
                         { ppiData: PolarOhrPPIData ->
@@ -491,7 +524,7 @@ class MainActivity : AppCompatActivity() {
             val isDisposed = listExercisesDisposable?.isDisposed ?: true
             if (isDisposed) {
                 exerciseEntries.clear()
-                listExercisesDisposable = api.listExercises(deviceId)
+                listExercisesDisposable = api.listExercises(polarId)
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(
                         { polarExerciseEntry: PolarExerciseEntry ->
@@ -504,7 +537,7 @@ class MainActivity : AppCompatActivity() {
                             showSnackbar(errorDescription)
                         },
                         {
-                            val completedOk = "Exercise listing completed. Listed ${exerciseEntries.count()} exercises on device $deviceId."
+                            val completedOk = "Exercise listing completed. Listed ${exerciseEntries.count()} exercises on device $polarId."
                             Log.d(TAG, completedOk)
                             showSnackbar(completedOk)
                         }
@@ -519,7 +552,7 @@ class MainActivity : AppCompatActivity() {
             if (isDisposed) {
                 if (exerciseEntries.isNotEmpty()) {
                     // just for the example purpose read the entry which is first on the exerciseEntries list
-                    fetchExerciseDisposable = api.fetchExercise(deviceId, exerciseEntries.first())
+                    fetchExerciseDisposable = api.fetchExercise(polarId, exerciseEntries.first())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
                             { polarExerciseData: PolarExerciseData ->
@@ -552,7 +585,7 @@ class MainActivity : AppCompatActivity() {
                 if (exerciseEntries.isNotEmpty()) {
                     // just for the example purpose remove the entry which is first on the exerciseEntries list
                     val entry = exerciseEntries.first()
-                    removeExerciseDisposable = api.removeExercise(deviceId, entry)
+                    removeExerciseDisposable = api.removeExercise(polarId, entry)
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
                             {
@@ -581,7 +614,7 @@ class MainActivity : AppCompatActivity() {
             val isDisposed = recordingStartStopDisposable?.isDisposed ?: true
             if (isDisposed) {
                 val recordIdentifier = "TEST_APP_ID"
-                recordingStartStopDisposable = api.startRecording(deviceId, recordIdentifier, PolarBleApi.RecordingInterval.INTERVAL_1S, PolarBleApi.SampleType.HR)
+                recordingStartStopDisposable = api.startRecording(polarId, recordIdentifier, PolarBleApi.RecordingInterval.INTERVAL_1S, PolarBleApi.SampleType.HR)
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(
                         {
@@ -606,7 +639,7 @@ class MainActivity : AppCompatActivity() {
         stopH10RecordingButton.setOnClickListener {
             val isDisposed = recordingStartStopDisposable?.isDisposed ?: true
             if (isDisposed) {
-                recordingStartStopDisposable = api.stopRecording(deviceId)
+                recordingStartStopDisposable = api.stopRecording(polarId)
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(
                         {
@@ -628,7 +661,7 @@ class MainActivity : AppCompatActivity() {
         readH10RecordingStatusButton.setOnClickListener {
             val isDisposed = recordingStatusReadDisposable?.isDisposed ?: true
             if (isDisposed) {
-                recordingStatusReadDisposable = api.requestRecordingStatus(deviceId)
+                recordingStatusReadDisposable = api.requestRecordingStatus(polarId)
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(
                         { pair: Pair<Boolean, String> ->
@@ -668,7 +701,7 @@ class MainActivity : AppCompatActivity() {
         setTimeButton.setOnClickListener {
             val calendar = Calendar.getInstance()
             calendar.time = Date()
-            api.setLocalTime(deviceId, calendar)
+            api.setLocalTime(polarId, calendar)
                 .subscribe(
                     { Log.d(TAG, "time ${calendar.time} set to device") },
                     { error: Throwable -> Log.d(TAG, "set time failed: $error") }
@@ -678,7 +711,7 @@ class MainActivity : AppCompatActivity() {
         toggleSdkModeButton.setOnClickListener {
             toggleSdkModeButton.isEnabled = false
             if (!sdkModeEnabledStatus) {
-                sdkModeEnableDisposable = api.enableSDKMode(deviceId)
+                sdkModeEnableDisposable = api.enableSDKMode(polarId)
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(
                         {
@@ -699,7 +732,7 @@ class MainActivity : AppCompatActivity() {
                         }
                     )
             } else {
-                sdkModeEnableDisposable = api.disableSDKMode(deviceId)
+                sdkModeEnableDisposable = api.disableSDKMode(polarId)
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(
                         {
@@ -907,14 +940,26 @@ class MainActivity : AppCompatActivity() {
         ppgDisposable?.dispose()
     }
 
-    fun initSender(ip: String, port: Int) {
-        // Validate IP address
-        val isIpAddressValid = Patterns.IP_ADDRESS.matcher(ip).matches()
+    fun setPolarId(value: String) {
+        polarId = value
+        val sharedPref = getPreferences(Context.MODE_PRIVATE) ?: return
+        with (sharedPref.edit()) {
+            putString(getString(R.string.saved_polar_id_key), polarId)
+        }
+    }
 
+    fun initSender(ip: String, port: Int) {
+        val isIpAddressValid = Patterns.IP_ADDRESS.matcher(ip).matches()
         return if (isIpAddressValid) {
             try {
                 //connect()
                 sender = OSCPortOut(InetAddress.getByName(ip), port)
+                val sharedPref = getPreferences(Context.MODE_PRIVATE) ?: return
+                with (sharedPref.edit()) {
+                    putString(getString(R.string.saved_osc_ip_key), ip)
+                    putInt(getString(R.string.saved_osc_port_key), port)
+                    apply()
+                }
             } catch (e: SocketException) {
                 e.printStackTrace()
             }
@@ -927,7 +972,9 @@ class MainActivity : AppCompatActivity() {
         //Logger.d("sendMessage - address: $address - args: $args", this)
 //        Completable
 //            .fromCallable {
-                sendOSCMessage(address, args)
+                val args1 = args?.toMutableList()
+                args1?.add(0, DEVICE_ID)
+                sendOSCMessage(address, args1)
 //            }
 //            .subscribeOn(Schedulers.io())
 //            .subscribe()

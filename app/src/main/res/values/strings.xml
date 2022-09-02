@@ -16,7 +16,7 @@
     <string name="disable_sdk_mode">Disable SDK mode</string>
     <string name="listen_broadcast">Listen broadcast</string>
     <string name="set_osc_ip">OSC ip %s</string>
-    <string name="set_osc_port">OSC %s</string>
+    <string name="set_osc_port">OSC port %s</string>
     <string name="listening_broadcast">Listening broadcast</string>
     <string name="connect_to_device">Connect to %s</string>
     <string name="disconnect_from_device">Disconnect from %s</string>
@@ -35,4 +35,7 @@
     <string name="range">Range</string>
     <string name="channels">Channels</string>
     <string name="ok">OK</string>
+    <string name="saved_osc_ip_key">osc_ip</string>
+    <string name="saved_osc_port_key">osc_port</string>
+    <string name="saved_polar_id_key">polar_id</string>
 </resources>
