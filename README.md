@@ -1,4 +1,5 @@
-# polarAndroidOscApp
+# Polar BLE to OSC bridge app
+
 Android app to stream data from various Polar BLE devices to OSC
 
 Mostly tested with Polar H10 (ECG and Accelerometer streams)
@@ -7,7 +8,7 @@ Based on [androidBleSdkTestApp](https://github.com/polarofficial/polar-ble-sdk/t
 
 ## Available OSC streams
 
-Theese streams are implemented in the app (not all might be supported by your device):
+These streams are implemented in the app (not all might be supported by your device):
 
 `/polar/ecg` ECG stream
 
@@ -20,6 +21,8 @@ Theese streams are implemented in the app (not all might be supported by your de
 `/polar/ppg` PPG stream
 
 `/polar/ppi` PPI stream
+
+The "/polar" prefix can be changed.
 
 ## Screenshots
 
