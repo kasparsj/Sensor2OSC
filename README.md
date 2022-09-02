@@ -1,30 +1,22 @@
 # polarAndroidOscApp
 Android app to stream data from Polar devices to OSC
 
-# Available data streams
+Based on [androidBleSdkTestApp](https://github.com/polarofficial/polar-ble-sdk/tree/master/examples/example-android/androidBleSdkTestApp) from [polar-ble-sdk](https://github.com/polarofficial/polar-ble-sdk)
 
-```
-/polar/ecg
-```
+## Available OSC streams
 
-```
-/polar/acc
-```
+Theese streams are implemented in the app (not all might be supported by your device):
 
-```
-/polar/gyro
-```
+`/polar/ecg` ECG stream
 
-```
-/polar/mag
-```
+`/polar/acc` Accelerometer stream
 
-```
-/polar/ppg
-```
+`/polar/gyro` Gyroscope stream
 
-```
-/polar/ppi
-```
+`/polar/mag` Magnetometer stream
 
-Tested with Polar H10
+`/polar/ppg` PPG stream
+
+`/polar/ppi` PPI stream
+
+Tested with Polar H10 (only supports ECG and Accelerometer streams)
