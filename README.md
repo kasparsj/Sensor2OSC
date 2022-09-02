@@ -1,5 +1,5 @@
 # polarAndroidOscApp
-Android app to stream data from Polar devices to OSC
+Android app to stream data from Polar BLE devices to OSC
 
 Based on [androidBleSdkTestApp](https://github.com/polarofficial/polar-ble-sdk/tree/master/examples/example-android/androidBleSdkTestApp) from [polar-ble-sdk](https://github.com/polarofficial/polar-ble-sdk)
 
