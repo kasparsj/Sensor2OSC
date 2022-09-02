@@ -372,22 +372,11 @@ class MainActivity : AppCompatActivity() {
                     .subscribe(
                         { polarAccelerometerData: PolarAccelerometerData ->
                             val samples = arrayListOf<Int>()
-                            val eulers = arrayListOf<Float>()
                             for (data in polarAccelerometerData.samples) {
                                 Log.d(TAG, "ACC    x: ${data.x} y:  ${data.y} z: ${data.z}")
                                 samples.addAll(listOf(data.x, data.y, data.z))
-                                val roll = kotlin.math.atan2(
-                                    data.y.toFloat(),
-                                    sqrt(data.x.toFloat().pow(2) + data.z.toFloat().pow(2))
-                                )
-                                val pitch = kotlin.math.atan2(
-                                    data.x.toFloat(),
-                                    sqrt(data.y.toFloat().pow(2) + data.z.toFloat().pow(2))
-                                )
-                                eulers.addAll(arrayListOf<Float>(roll, pitch, 0.0F))
                             }
                             sendMessage(oscPrefix + "/acc", samples)
-                            sendMessage(oscPrefix + "/euler", eulers)
                         },
                         { error: Throwable ->
                             toggleButtonUp(accButton, R.string.start_acc_stream)
