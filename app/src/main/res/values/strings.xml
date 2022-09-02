@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Polar BLE SDK Example</string>
+    <string name="app_name">Polar BLE to OSC bridge</string>
     <string name="start_ecg_stream">Start ECG Stream</string>
     <string name="stop_ecg_stream">Stop ECG Stream</string>
     <string name="start_acc_stream">Start ACC Stream</string>
@@ -14,7 +14,7 @@
     <string name="stop_ppi_stream">Stop PPI Stream</string>
     <string name="enable_sdk_mode">Enable SDK mode</string>
     <string name="disable_sdk_mode">Disable SDK mode</string>
-    <string name="listen_broadcast">Listen broadcast</string>
+    <string name="set_osc_prefix">OSC prefix "%s"</string>
     <string name="set_osc_ip">OSC ip %s</string>
     <string name="set_osc_port">OSC port %s</string>
     <string name="listening_broadcast">Listening broadcast</string>
@@ -37,5 +37,6 @@
     <string name="ok">OK</string>
     <string name="saved_osc_ip_key">osc_ip</string>
     <string name="saved_osc_port_key">osc_port</string>
+    <string name="saved_osc_prefix_key">osc_prefix</string>
     <string name="saved_polar_id_key">polar_id</string>
 </resources>

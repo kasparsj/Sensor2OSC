@@ -23,20 +23,11 @@
             android:layout_height="wrap_content"
             android:text="@string/set_osc_port" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="2dp"
-            android:layout_marginBottom="2dp"
-            android:layout_marginStart="10dp"
-            android:layout_marginEnd="10dp"
-            android:background="@android:color/white" />
-
         <Button
-            android:id="@+id/broadcast_button"
+            android:id="@+id/set_osc_prefix_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/listen_broadcast" />
+            android:text="@string/set_osc_prefix" />
 
         <View
             android:layout_width="match_parent"

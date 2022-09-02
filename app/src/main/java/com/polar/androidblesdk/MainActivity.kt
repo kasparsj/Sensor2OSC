@@ -45,6 +45,7 @@ class MainActivity : AppCompatActivity() {
         private const val PERMISSION_REQUEST_CODE = 1
         private const val ZERO_IP = "0.0.0.0"
         private const val DEFAULT_OSC_PORT = 57120
+        private const val DEFAULT_OSC_PREFIX = "/polar"
         private const val DEFAULT_POLAR_ID = "7E37D222"
         private const val DEVICE_ID = 0
     }
@@ -52,12 +53,12 @@ class MainActivity : AppCompatActivity() {
     private var polarId = DEFAULT_POLAR_ID
     private var oscIp: String = ZERO_IP
     private var oscPort: Int = DEFAULT_OSC_PORT
+    private var oscPrefix: String = DEFAULT_OSC_PREFIX
 
     private val api: PolarBleApi by lazy {
         // Notice PolarBleApi.ALL_FEATURES are enabled
         PolarBleApiDefaultImpl.defaultImplementation(applicationContext, PolarBleApi.ALL_FEATURES)
     }
-    private lateinit var broadcastDisposable: Disposable
     private var scanDisposable: Disposable? = null
     private var autoConnectDisposable: Disposable? = null
     private var ecgDisposable: Disposable? = null
@@ -80,7 +81,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var setOscIpButton: Button
     private lateinit var setOscPortButton: Button
-    private lateinit var broadcastButton: Button
+    private lateinit var setOscPrefixButton: Button
     private lateinit var connectButton: Button
     private lateinit var autoConnectButton: Button
     private lateinit var scanButton: Button
@@ -107,7 +108,7 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "version: " + PolarBleApiDefaultImpl.versionInfo())
         setOscIpButton = findViewById(R.id.set_osc_ip_button)
         setOscPortButton = findViewById(R.id.set_osc_port_button)
-        broadcastButton = findViewById(R.id.broadcast_button)
+        setOscPrefixButton = findViewById(R.id.set_osc_prefix_button)
         connectButton = findViewById(R.id.connect_button)
         autoConnectButton = findViewById(R.id.auto_connect_button)
         scanButton = findViewById(R.id.scan_button)
@@ -242,24 +243,25 @@ class MainActivity : AppCompatActivity() {
             initSender(oscIp, oscPort)
         }
 
-        broadcastButton.setOnClickListener {
-            if (!this::broadcastDisposable.isInitialized || broadcastDisposable.isDisposed) {
-                toggleButtonDown(broadcastButton, R.string.listening_broadcast)
-                broadcastDisposable = api.startListenForPolarHrBroadcasts(null)
-                    .subscribe(
-                        { polarBroadcastData: PolarHrBroadcastData ->
-                            Log.d(TAG, "HR BROADCAST ${polarBroadcastData.polarDeviceInfo.deviceId} HR: ${polarBroadcastData.hr} batt: ${polarBroadcastData.batteryStatus}")
-                        },
-                        { error: Throwable ->
-                            toggleButtonUp(broadcastButton, R.string.listen_broadcast)
-                            Log.e(TAG, "Broadcast listener failed. Reason $error")
-                        },
-                        { Log.d(TAG, "complete") }
-                    )
-            } else {
-                toggleButtonUp(broadcastButton, R.string.listen_broadcast)
-                broadcastDisposable.dispose()
-            }
+        oscPrefix = sharedPref.getString(getString(R.string.saved_osc_prefix_key), oscPrefix).toString()
+        setOscPrefixButton.text = getString(R.string.set_osc_prefix, oscPrefix)
+        setOscPrefixButton.setOnClickListener {
+            val builder: AlertDialog.Builder = androidx.appcompat.app.AlertDialog.Builder(this)
+            builder.setTitle("Enter OSC prefix")
+
+            val input = EditText(this)
+            input.setHint(DEFAULT_OSC_PREFIX)
+            input.setText(oscPrefix)
+            input.inputType = InputType.TYPE_CLASS_TEXT
+            builder.setView(input)
+
+            builder.setPositiveButton("OK", DialogInterface.OnClickListener { dialog, which ->
+                oscPrefix = input.text.toString()
+                setOscPrefixButton.text = getString(R.string.set_osc_prefix, oscPrefix)
+            })
+            builder.setNegativeButton("Cancel", DialogInterface.OnClickListener { dialog, which -> dialog.cancel() })
+
+            builder.show()
         }
 
         polarId = sharedPref.getString(getString(R.string.saved_polar_id_key), polarId).toString()
@@ -340,7 +342,7 @@ class MainActivity : AppCompatActivity() {
                     }
                     .subscribe(
                         { polarEcgData: PolarEcgData ->
-                            sendMessage("/polar/ecg", polarEcgData.samples)
+                            sendMessage(oscPrefix + "/ecg", polarEcgData.samples)
                             for (microVolts in polarEcgData.samples) {
                                 Log.d(TAG, "    yV: $microVolts")
                             }
@@ -384,8 +386,8 @@ class MainActivity : AppCompatActivity() {
                                 )
                                 eulers.addAll(arrayListOf<Float>(roll, pitch, 0.0F))
                             }
-                            sendMessage("/polar/acc", samples)
-                            sendMessage("/polar/euler", eulers)
+                            sendMessage(oscPrefix + "/acc", samples)
+                            sendMessage(oscPrefix + "/euler", eulers)
                         },
                         { error: Throwable ->
                             toggleButtonUp(accButton, R.string.start_acc_stream)
@@ -415,7 +417,7 @@ class MainActivity : AppCompatActivity() {
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
                             { polarGyroData: PolarGyroData ->
-                                sendMessage("/polar/gyr", polarGyroData.samples)
+                                sendMessage(oscPrefix + "/gyro", polarGyroData.samples)
                                 for (data in polarGyroData.samples) {
                                     Log.d(TAG, "GYR    x: ${data.x} y:  ${data.y} z: ${data.z}")
                                 }
@@ -445,7 +447,7 @@ class MainActivity : AppCompatActivity() {
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
                             { polarMagData: PolarMagnetometerData ->
-                                sendMessage("/polar/mag", polarMagData.samples)
+                                sendMessage(oscPrefix + "/mag", polarMagData.samples)
                                 for (data in polarMagData.samples) {
                                     Log.d(TAG, "MAG    x: ${data.x} y:  ${data.y} z: ${data.z}")
                                 }
@@ -475,7 +477,7 @@ class MainActivity : AppCompatActivity() {
                         .subscribe(
                             { polarOhrPPGData: PolarOhrData ->
                                 if (polarOhrPPGData.type == PolarOhrData.OHR_DATA_TYPE.PPG3_AMBIENT1) {
-                                    sendMessage("/polar/ppg", polarOhrPPGData.samples)
+                                    sendMessage(oscPrefix + "/ppg", polarOhrPPGData.samples)
                                     for (data in polarOhrPPGData.samples) {
                                         Log.d(TAG, "PPG    ppg0: ${data.channelSamples[0]} ppg1: ${data.channelSamples[1]} ppg2: ${data.channelSamples[2]} ambient: ${data.channelSamples[3]}")
                                     }
@@ -502,7 +504,7 @@ class MainActivity : AppCompatActivity() {
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(
                         { ppiData: PolarOhrPPIData ->
-                            sendMessage("/polar/ppi", ppiData.samples)
+                            sendMessage(oscPrefix + "/ppi", ppiData.samples)
                             for (sample in ppiData.samples) {
                                 Log.d(TAG, "PPI    ppi: ${sample.ppi} blocker: ${sample.blockerBit} errorEstimate: ${sample.errorEstimate}")
                             }
@@ -890,7 +892,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun disableAllButtons() {
-        broadcastButton.isEnabled = false
+        setOscPrefixButton.isEnabled = false
         connectButton.isEnabled = false
         autoConnectButton.isEnabled = false
         scanButton.isEnabled = false
@@ -911,7 +913,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun enableAllButtons() {
-        broadcastButton.isEnabled = true
+        setOscPrefixButton.isEnabled = true
         connectButton.isEnabled = true
         autoConnectButton.isEnabled = true
         scanButton.isEnabled = true
