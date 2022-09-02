@@ -21,3 +21,6 @@ Theese streams are implemented in the app (not all might be supported by your de
 
 `/polar/ppi` PPI stream
 
+## Screenshots
+
+![Screenshot](/screenshot.png)
