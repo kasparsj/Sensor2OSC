@@ -10,6 +10,8 @@ Based on [androidBleSdkTestApp](https://github.com/polarofficial/polar-ble-sdk/t
 
 These streams are implemented in the app (not all might be supported by your device):
 
+`/polar/hr` Heart rate stream
+
 `/polar/ecg` ECG stream
 
 `/polar/acc` Accelerometer stream
