@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.DialogInterface
 import android.content.pm.PackageManager
+import android.os.AsyncTask
 import android.os.Build
 import android.os.Bundle
 import android.text.InputType
@@ -35,8 +36,7 @@ import io.reactivex.rxjava3.functions.Function
 import java.net.InetAddress
 import java.net.SocketException
 import java.util.*
-import kotlin.math.pow
-import kotlin.math.sqrt
+
 
 class MainActivity : AppCompatActivity() {
     companion object {
@@ -47,7 +47,6 @@ class MainActivity : AppCompatActivity() {
         private const val DEFAULT_OSC_PORT = 57120
         private const val DEFAULT_OSC_PREFIX = "/polar"
         private const val DEFAULT_POLAR_ID = "7E37D222"
-        private const val DEVICE_ID = 0
     }
 
     private var polarId = DEFAULT_POLAR_ID
@@ -185,6 +184,14 @@ class MainActivity : AppCompatActivity() {
 
             override fun hrNotificationReceived(identifier: String, data: PolarHrData) {
                 Log.d(TAG, "HR value: ${data.hr} rrsMs: ${data.rrsMs} rr: ${data.rrs} contact: ${data.contactStatus} , ${data.contactStatusSupported}")
+                AsyncTask.execute {
+                    val samples = arrayListOf<Int>()
+                    samples.add(data.hr)
+                    samples.addAll(data.rrsMs)
+                    samples.addAll(data.rrs)
+                    samples.addAll(listOf(if (data.contactStatus) 1 else 0, if (data.contactStatusSupported) 1 else 0))
+                    sendMessage(oscPrefix + "/hr", samples)
+                }
             }
 
             override fun polarFtpFeatureReady(s: String) {
@@ -960,11 +967,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun sendMessage(address: String, args: List<Any>? = null) {
-        //Logger.d("sendMessage - address: $address - args: $args", this)
+        Log.d(TAG, "sendMessage - address: $address - args: $args")
 //        Completable
 //            .fromCallable {
                 val args1 = args?.toMutableList()
-                args1?.add(0, DEVICE_ID)
+                args1?.add(0, polarId)
                 sendOSCMessage(address, args1)
 //            }
 //            .subscribeOn(Schedulers.io())
