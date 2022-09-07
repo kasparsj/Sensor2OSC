@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.polar.androidblesdk.PolarSensorsFragment">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:id="@+id/buttons_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/acc_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/start_acc_stream" />
+
+            <Button
+                android:id="@+id/gyr_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/start_gyro_stream" />
+
+            <Button
+                android:id="@+id/mag_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/start_mag_stream" />
+
+            <Button
+                android:id="@+id/quat_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/start_quat_stream" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</FrameLayout>

@@ -8,6 +8,8 @@
     <string name="stop_gyro_stream">Stop GYRO Stream</string>
     <string name="start_mag_stream">Start Magnetometer Stream</string>
     <string name="stop_mag_stream">Stop Magnetometer Stream</string>
+    <string name="start_quat_stream">Start Quat Stream</string>
+    <string name="stop_quat_stream">Stop Quat Stream</string>
     <string name="start_ppg_stream">Start PPG Stream</string>
     <string name="stop_ppg_stream">Stop PPG Stream</string>
     <string name="start_ppi_stream">Start PPI Stream</string>
@@ -39,4 +41,6 @@
     <string name="saved_osc_port_key">osc_port</string>
     <string name="saved_osc_prefix_key">osc_prefix</string>
     <string name="saved_polar_id_key">polar_id</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
