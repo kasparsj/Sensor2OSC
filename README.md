@@ -1,6 +1,6 @@
 # Polar BLE to OSC bridge app
 
-Android app to stream data from various Polar BLE devices to OSC
+Android app to stream data from Android and various Polar BLE device sensors to OSC
 
 Mostly tested with Polar H10 (ECG and Accelerometer streams)
 
