@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Polar BLE to OSC bridge</string>
+    <string name="app_name">Sensor2OSC</string>
     <string name="start_ecg_stream">Start ECG Stream</string>
     <string name="stop_ecg_stream">Stop ECG Stream</string>
     <string name="start_acc_stream">Start ACC Stream</string>

@@ -1,4 +1,4 @@
-package com.polar.androidblesdk
+package cc.kaspars.sensor2osc
 
 import android.content.Context
 import android.hardware.Sensor
@@ -42,10 +42,10 @@ class PhoneSensorsFragment : Fragment() {
         private const val TAG = "PhoneSensorsFragment"
     }
 
-    private var accListener:SensorListener? = null
-    private var gyroListener:SensorListener? = null
-    private var magListener:SensorListener? = null
-    private var quatListener:QuatListener? = null
+    private var accListener: SensorListener? = null
+    private var gyroListener: SensorListener? = null
+    private var magListener: SensorListener? = null
+    private var quatListener: QuatListener? = null
     private var accSensor:Sensor? = null
     private var gyroSensor:Sensor? = null
     private var magSensor:Sensor? = null
@@ -132,7 +132,7 @@ class PhoneSensorsFragment : Fragment() {
             }
             if (accListener == null) {
                 accListener = SensorListener(this, "/acc", 3)
-                sensorManager.registerListener(accListener, accSensor, SensorManager.SENSOR_DELAY_NORMAL)
+                sensorManager.registerListener(accListener, accSensor, SensorManager.SENSOR_DELAY_GAME)
                 toggleButtonDown(accButton, R.string.stop_acc_stream)
             } else {
                 sensorManager.unregisterListener(accListener)
@@ -152,7 +152,7 @@ class PhoneSensorsFragment : Fragment() {
             }
             if (gyroListener == null) {
                 gyroListener = SensorListener(this, "/gyro", 3)
-                sensorManager.registerListener(gyroListener, gyroSensor, SensorManager.SENSOR_DELAY_NORMAL)
+                sensorManager.registerListener(gyroListener, gyroSensor, SensorManager.SENSOR_DELAY_GAME)
                 toggleButtonDown(gyroButton, R.string.stop_gyro_stream)
             } else {
                 sensorManager.unregisterListener(gyroListener)
@@ -171,7 +171,7 @@ class PhoneSensorsFragment : Fragment() {
             }
             if (magListener == null) {
                 magListener = SensorListener(this, "/mag", 3)
-                sensorManager.registerListener(magListener, magSensor, SensorManager.SENSOR_DELAY_NORMAL)
+                sensorManager.registerListener(magListener, magSensor, SensorManager.SENSOR_DELAY_GAME)
                 toggleButtonDown(magButton, R.string.stop_mag_stream)
             } else {
                 toggleButtonUp(magButton, R.string.start_mag_stream)
@@ -190,7 +190,7 @@ class PhoneSensorsFragment : Fragment() {
             }
             if (quatListener == null) {
                 quatListener = QuatListener(this, "/quat")
-                sensorManager.registerListener(quatListener, quatSensor, SensorManager.SENSOR_DELAY_FASTEST)
+                sensorManager.registerListener(quatListener, quatSensor, SensorManager.SENSOR_DELAY_GAME)
                 toggleButtonDown(quatButton, R.string.stop_quat_stream)
             } else {
                 toggleButtonUp(quatButton, R.string.start_quat_stream)

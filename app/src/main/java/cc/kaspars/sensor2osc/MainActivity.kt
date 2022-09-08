@@ -1,4 +1,4 @@
-package com.polar.androidblesdk
+package cc.kaspars.sensor2osc
 
 import android.content.Context
 import android.content.DialogInterface
@@ -76,13 +76,13 @@ class MainActivity : AppCompatActivity() {
         adapterViewPager = MyPagerAdapter(supportFragmentManager)
         vpPager.adapter = adapterViewPager
 
-        setOscIpButton = findViewById(com.polar.androidblesdk.R.id.set_osc_ip_button)
-        setOscPortButton = findViewById(com.polar.androidblesdk.R.id.set_osc_port_button)
-        setOscPrefixButton = findViewById(com.polar.androidblesdk.R.id.set_osc_prefix_button)
+        setOscIpButton = findViewById(R.id.set_osc_ip_button)
+        setOscPortButton = findViewById(R.id.set_osc_port_button)
+        setOscPrefixButton = findViewById(R.id.set_osc_prefix_button)
 
         val sharedPref = getPreferences(MODE_PRIVATE) ?: return
-        oscIp = sharedPref.getString(getString(com.polar.androidblesdk.R.string.saved_osc_ip_key), oscIp).toString()
-        setOscIpButton.text = getString(com.polar.androidblesdk.R.string.set_osc_ip, oscIp)
+        oscIp = sharedPref.getString(getString(R.string.saved_osc_ip_key), oscIp).toString()
+        setOscIpButton.text = getString(R.string.set_osc_ip, oscIp)
         setOscIpButton.setOnClickListener {
             val builder: AlertDialog.Builder = AlertDialog.Builder(this)
             builder.setTitle("Enter IP address")
@@ -97,7 +97,7 @@ class MainActivity : AppCompatActivity() {
 
             builder.setPositiveButton("OK", DialogInterface.OnClickListener { dialog, which ->
                 oscIp = input.text.toString()
-                setOscIpButton.text = getString(com.polar.androidblesdk.R.string.set_osc_ip, oscIp)
+                setOscIpButton.text = getString(R.string.set_osc_ip, oscIp)
                 initSender(oscIp, oscPort)
             })
             builder.setNegativeButton("Cancel", DialogInterface.OnClickListener { dialog, which -> dialog.cancel() })
@@ -105,8 +105,8 @@ class MainActivity : AppCompatActivity() {
             builder.show()
         }
 
-        oscPort = sharedPref.getInt(getString(com.polar.androidblesdk.R.string.saved_osc_port_key), oscPort)
-        setOscPortButton.text = getString(com.polar.androidblesdk.R.string.set_osc_port, Integer.toString(oscPort))
+        oscPort = sharedPref.getInt(getString(R.string.saved_osc_port_key), oscPort)
+        setOscPortButton.text = getString(R.string.set_osc_port, Integer.toString(oscPort))
         setOscPortButton.setOnClickListener {
             val builder: AlertDialog.Builder = AlertDialog.Builder(this)
             builder.setTitle("Enter port number")
@@ -119,7 +119,7 @@ class MainActivity : AppCompatActivity() {
 
             builder.setPositiveButton("OK", DialogInterface.OnClickListener { dialog, which ->
                 oscPort = Integer.parseInt(input.text.toString())
-                setOscPortButton.text = getString(com.polar.androidblesdk.R.string.set_osc_port, Integer.toString(oscPort))
+                setOscPortButton.text = getString(R.string.set_osc_port, Integer.toString(oscPort))
                 initSender(oscIp, oscPort)
             })
             builder.setNegativeButton("Cancel", DialogInterface.OnClickListener { dialog, which -> dialog.cancel() })
@@ -131,8 +131,8 @@ class MainActivity : AppCompatActivity() {
             initSender(oscIp, oscPort)
         }
 
-        oscPrefix = sharedPref.getString(getString(com.polar.androidblesdk.R.string.saved_osc_prefix_key), oscPrefix).toString()
-        setOscPrefixButton.text = getString(com.polar.androidblesdk.R.string.set_osc_prefix, oscPrefix)
+        oscPrefix = sharedPref.getString(getString(R.string.saved_osc_prefix_key), oscPrefix).toString()
+        setOscPrefixButton.text = getString(R.string.set_osc_prefix, oscPrefix)
         setOscPrefixButton.setOnClickListener {
             val builder: AlertDialog.Builder = AlertDialog.Builder(this)
             builder.setTitle("Enter OSC prefix")
@@ -145,7 +145,7 @@ class MainActivity : AppCompatActivity() {
 
             builder.setPositiveButton("OK", DialogInterface.OnClickListener { dialog, which ->
                 oscPrefix = input.text.toString()
-                setOscPrefixButton.text = getString(com.polar.androidblesdk.R.string.set_osc_prefix, oscPrefix)
+                setOscPrefixButton.text = getString(R.string.set_osc_prefix, oscPrefix)
             })
             builder.setNegativeButton("Cancel", DialogInterface.OnClickListener { dialog, which -> dialog.cancel() })
 
@@ -159,7 +159,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun showSnackbar(message: String) {
-        val contextView = findViewById<View>(com.polar.androidblesdk.R.id.buttons_container)
+        val contextView = findViewById<View>(R.id.buttons_container)
         Snackbar.make(contextView, message, Snackbar.LENGTH_LONG)
             .show()
     }

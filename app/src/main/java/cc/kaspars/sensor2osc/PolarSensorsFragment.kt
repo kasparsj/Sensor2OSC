@@ -1,4 +1,4 @@
-package com.polar.androidblesdk
+package cc.kaspars.sensor2osc
 
 import android.Manifest
 import android.content.Context
@@ -866,7 +866,7 @@ class PolarSensorsFragment : Fragment() {
         polarId = value
         val sharedPref = getPreferences()
         with (sharedPref.edit()) {
-            putString(getString(com.polar.androidblesdk.R.string.saved_polar_id_key), polarId)
+            putString(getString(R.string.saved_polar_id_key), polarId)
         }
     }
 

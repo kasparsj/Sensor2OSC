@@ -6,7 +6,7 @@
     android:orientation="vertical"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.polar.androidblesdk.MainActivity">
+    tools:context="cc.kaspars.sensor2osc.MainActivity">
 
     <Button
         android:id="@+id/set_osc_ip_button"
