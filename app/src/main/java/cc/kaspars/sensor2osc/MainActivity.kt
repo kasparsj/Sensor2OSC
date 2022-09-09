@@ -27,7 +27,7 @@ class MainActivity : AppCompatActivity() {
         private const val TAG = "MainActivity"
         private const val ZERO_IP = "0.0.0.0"
         private const val DEFAULT_OSC_PORT = 57120
-        private const val DEFAULT_OSC_PREFIX = "/polar"
+        private const val DEFAULT_OSC_PREFIX = "/sensor"
     }
 
     var adapterViewPager: FragmentPagerAdapter? = null

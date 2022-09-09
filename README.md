@@ -10,21 +10,21 @@ Based on [androidBleSdkTestApp](https://github.com/polarofficial/polar-ble-sdk/t
 
 These streams are implemented in the app (not all might be supported by your device):
 
-`/polar/hr` Heart rate stream
+`/sensor/hr` Heart rate stream
 
-`/polar/ecg` ECG stream
+`/sensor/ecg` ECG stream
 
-`/polar/acc` Accelerometer stream
+`/sensor/acc` Accelerometer stream
 
-`/polar/gyro` Gyroscope stream
+`/sensor/gyro` Gyroscope stream
 
-`/polar/mag` Magnetometer stream
+`/sensor/mag` Magnetometer stream
 
-`/polar/ppg` PPG stream
+`/sensor/ppg` PPG stream
 
-`/polar/ppi` PPI stream
+`/sensor/ppi` PPI stream
 
-The "/polar" prefix can be changed.
+The "/sensor" prefix can be changed.
 
 ## Screenshots
 
