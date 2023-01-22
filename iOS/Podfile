@@ -5,4 +5,5 @@ use_frameworks!
 
 target 'iosBleSdkTestApp' do
     pod 'PolarBleSdk', '4.0.0'
+    pod 'SwiftOSC', '~> 1.3'
 end

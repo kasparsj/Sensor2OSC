@@ -14,6 +14,12 @@ extension Text {
 
 struct ContentView: View {
     @ObservedObject var bleSdkManager: PolarBleSdkManager
+    @State private var showIpAlert = false
+    @State private var oscIp = "localhost"
+    @State private var showPortAlert = false
+    @State private var oscPort = "8080"
+    @State private var showPrefixAlert = false
+    @State private var oscPrefix = "/polar"
     
     var body: some View {
         VStack {
@@ -26,6 +32,58 @@ struct ContentView: View {
                         Text("Bluetooth OFF")
                             .bold()
                             .foregroundColor(.red)
+                    }
+                    
+                    Group {
+                        Text("OSC:")
+                            .headerStyle()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                        Button(action: {
+                            showIpAlert.toggle()
+                        }) {
+                            Text("OSC IP " + oscIp)
+                        }
+                        .onAppear {
+                            oscIp = PolarBleSdkManager.oscIp
+                        }
+                        .buttonStyle(PrimaryButtonStyle(buttonState: ButtonState.released))
+                        .alert("OSC IP", isPresented: $showIpAlert) {
+                            TextField("Enter IP address", text: $oscIp)
+                            Button("OK", action: setOscIp)
+                            Button("Cancel", role: .cancel) { }
+                        }
+                
+                        Button(action: {
+                            showPortAlert.toggle()
+                        }) {
+                            Text("OSC Port " + oscPort)
+                        }
+                        .onAppear {
+                            oscPort = String(PolarBleSdkManager.oscPort)
+                        }
+                        .buttonStyle(PrimaryButtonStyle(buttonState: ButtonState.released))
+                        .alert("OSC Port", isPresented: $showPortAlert) {
+                            TextField("Enter Port number", text: $oscPort)
+                                .keyboardType(.numberPad)
+                            Button("OK", action: setOscPort)
+                            Button("Cancel", role: .cancel) { }
+                        }
+                
+                        Button(action: {
+                            showPrefixAlert.toggle()
+                        }) {
+                            Text("OSC Prefix " + oscPrefix)
+                        }
+                        .onAppear {
+                            oscPrefix = PolarBleSdkManager.oscPrefix
+                        }
+                        .buttonStyle(PrimaryButtonStyle(buttonState: ButtonState.released))
+                        .alert("OSC Prefix", isPresented: $showPrefixAlert) {
+                            TextField("Enter OSC prefix", text: $oscPrefix)
+                            Button("OK", action: setOscPrefix)
+                            Button("Cancel", role: .cancel) { }
+                        }
                     }
                     
                     Group {
@@ -141,6 +199,20 @@ struct ContentView: View {
         }
     }
     
+    func setOscIp() {
+        PolarBleSdkManager.oscIp = oscIp
+        bleSdkManager.initClient()
+    }
+    
+    func setOscPort() {
+        PolarBleSdkManager.oscPort = Int(oscPort) ?? 8080
+        bleSdkManager.initClient()
+    }
+    
+    func setOscPrefix() {
+        PolarBleSdkManager.oscPrefix = oscPrefix
+    }
+        
     func streamButtonToggle(_ feature:DeviceStreamingFeature) {
         NSLog("Stream toggle for feature \(feature)")
         if(bleSdkManager.isStreamOn(feature: feature)) {

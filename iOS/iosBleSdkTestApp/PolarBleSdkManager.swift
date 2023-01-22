@@ -4,15 +4,13 @@ import Foundation
 import PolarBleSdk
 import RxSwift
 import CoreBluetooth
+import SwiftOSC
 
 /// PolarBleSdkManager demonstrates how to user PolarBleSDK API
 class PolarBleSdkManager : ObservableObject {
     
     // NOTICE this example utilises all available features
     private var api = PolarBleApiDefaultImpl.polarImplementation(DispatchQueue.main, features: Features.allFeatures.rawValue)
-    
-    // TODO replace the device id with your device ID or use the auto connect to when connecting to device
-    private var deviceId = "8C4CAD2D"
     
     @Published private(set) var isBluetoothOn: Bool
     @Published private(set) var isBroadcastListenOn: Bool = false
@@ -56,9 +54,51 @@ class PolarBleSdkManager : ObservableObject {
     private var ppiDisposable: Disposable?
     private let disposeBag = DisposeBag()
     private var exerciseEntry: PolarExerciseEntry?
+    private var client:OSCClient
+    
+    public static var oscIp:String {
+        get {
+           return UserDefaults.standard.string(forKey: "oscIp") ?? "localhost"
+        }
+        set(newValue) {
+            UserDefaults.standard.set(newValue, forKey: "oscIp")
+            UserDefaults.standard.synchronize()
+        }
+    }
+    
+    public static var oscPort:Int {
+        get {
+           return UserDefaults.standard.integer(forKey: "oscPort") ?? 8080
+        }
+        set(newValue) {
+            UserDefaults.standard.set(newValue, forKey: "oscPort")
+            UserDefaults.standard.synchronize()
+        }
+    }
+    
+    public static var oscPrefix:String {
+        get {
+           return UserDefaults.standard.string(forKey: "oscPrefix") ?? "/polar"
+        }
+        set(newValue) {
+            UserDefaults.standard.set(newValue, forKey: "oscPrefix")
+            UserDefaults.standard.synchronize()
+        }
+    }
+    
+    public static var deviceId:String {
+        get {
+            return UserDefaults.standard.string(forKey: "deviceId") ?? "8C4CAD2D"
+        }
+        set(newValue) {
+            UserDefaults.standard.set(newValue, forKey: "deviceId")
+            UserDefaults.standard.synchronize()
+        }
+    }
     
     init() {
         self.isBluetoothOn = api.isBlePowered
+        self.client = OSCClient(address: PolarBleSdkManager.oscIp, port: PolarBleSdkManager.oscPort)
         
         api.polarFilter(true)
         api.observer = self
@@ -68,6 +108,12 @@ class PolarBleSdkManager : ObservableObject {
         api.sdkModeFeatureObserver = self
         api.deviceHrObserver = self
         api.logger = self
+        
+        initClient()
+    }
+    
+    func initClient() {
+        self.client = OSCClient(address: PolarBleSdkManager.oscIp, port: PolarBleSdkManager.oscPort)
     }
     
     func broadcastToggle() {
@@ -95,9 +141,9 @@ class PolarBleSdkManager : ObservableObject {
     
     func connectToDevice() {
         do {
-            try api.connectToDevice(deviceId)
+            try api.connectToDevice(PolarBleSdkManager.deviceId)
         } catch let err {
-            NSLog("Failed to connect to \(deviceId). Reason \(err)")
+            NSLog("Failed to connect to \(PolarBleSdkManager.deviceId). Reason \(err)")
         }
     }
     
@@ -246,9 +292,15 @@ class PolarBleSdkManager : ObservableObject {
                 .subscribe{ e in
                     switch e {
                     case .next(let data):
+                        var message = OSCMessage(
+                            OSCAddressPattern(PolarBleSdkManager.oscPrefix + "/ecg"),
+                            deviceId
+                        )
                         for item in data.samples {
-                            NSLog("ECG    µV: \(item.voltage) timeStamp: \(item.timeStamp)")
+                            message.add(Int(item.voltage))
+                            //NSLog("ECG    µV: \(item.voltage) timeStamp: \(item.timeStamp)")
                         }
+                        self.client.send(message)
                     case .error(let err):
                         NSLog("ECG stream failed: \(err)")
                         self.isEcgStreamOn = false
@@ -276,9 +328,17 @@ class PolarBleSdkManager : ObservableObject {
                 .subscribe{ e in
                     switch e {
                     case .next(let data):
+                        var message = OSCMessage(
+                            OSCAddressPattern(PolarBleSdkManager.oscPrefix + "/acc"),
+                            deviceId
+                        )
                         for item in data.samples {
-                            NSLog("ACC    x: \(item.x) y: \(item.y) z: \(item.z) timeStamp: \(item.timeStamp)")
+                            message.add(Int(item.x))
+                            message.add(Int(item.y))
+                            message.add(Int(item.z))
+                            //NSLog("ACC    x: \(item.x) y: \(item.y) z: \(item.z) timeStamp: \(item.timeStamp)")
                         }
+                        self.client.send(message)
                     case .error(let err):
                         NSLog("ACC stream failed: \(err)")
                         self.isAccStreamOn = false
@@ -306,9 +366,17 @@ class PolarBleSdkManager : ObservableObject {
                 .subscribe{ e in
                     switch e {
                     case .next(let data):
+                        var message = OSCMessage(
+                            OSCAddressPattern(PolarBleSdkManager.oscPrefix + "/mag"),
+                            deviceId
+                        )
                         for item in data.samples {
+                            message.add(Int(item.x))
+                            message.add(Int(item.y))
+                            message.add(Int(item.z))
                             NSLog("MAG    x: \(item.x) y: \(item.y) z: \(item.z) timeStamp: \(item.timeStamp)")
                         }
+                        self.client.send(message)
                     case .error(let err):
                         NSLog("MAG stream failed: \(err)")
                         self.isMagStreamOn = false
@@ -335,9 +403,17 @@ class PolarBleSdkManager : ObservableObject {
                 .subscribe{ e in
                     switch e {
                     case .next(let data):
+                        var message = OSCMessage(
+                            OSCAddressPattern(PolarBleSdkManager.oscPrefix + "/gyro"),
+                            deviceId
+                        )
                         for item in data.samples {
+                            message.add(Int(item.x))
+                            message.add(Int(item.y))
+                            message.add(Int(item.z))
                             NSLog("GYR    x: \(item.x) y: \(item.y) z: \(item.z) timeStamp: \(item.timeStamp)")
                         }
+                        self.client.send(message)
                     case .error(let err):
                         NSLog("GYR stream failed: \(err)")
                         self.isGyrStreamOn = false
@@ -642,6 +718,7 @@ extension PolarBleSdkManager : PolarBleApiObserver {
             getH10RecordingStatus()
         }
         deviceConnectionState = ConnectionState.connected(polarDeviceInfo.deviceId)
+        PolarBleSdkManager.deviceId = polarDeviceInfo.deviceId
     }
     
     func deviceDisconnected(_ polarDeviceInfo: PolarDeviceInfo) {
@@ -697,14 +774,24 @@ extension PolarBleSdkManager : PolarBleApiSdkModeFeatureObserver {
 // MARK: - PolarBleApiDeviceHrObserver
 extension PolarBleSdkManager : PolarBleApiDeviceHrObserver {
     func hrValueReceived(_ identifier: String, data: PolarHrData) {
-        NSLog("(\(identifier)) HR value: \(data.hr) rrsMs: \(data.rrsMs) rrs: \(data.rrs) contact: \(data.contact) contact supported: \(data.contactSupported)")
+        var message = OSCMessage(
+            OSCAddressPattern(PolarBleSdkManager.oscPrefix + "/hr"),
+            PolarBleSdkManager.deviceId,
+            Int(data.hr)
+        )
+        message.add(data.rrsMs)
+        message.add(data.rrs)
+        message.add(data.contact ? 1 : 0)
+        message.add(data.contactSupported ? 1 : 0)
+        self.client.send(message)
+        //NSLog("(\(identifier)) HR value: \(data.hr) rrsMs: \(data.rrsMs) rrs: \(data.rrs) contact: \(data.contact) contact supported: \(data.contactSupported)")
     }
 }
 
 // MARK: - PolarBleApiLogger
 extension PolarBleSdkManager : PolarBleApiLogger {
     func message(_ str: String) {
-        NSLog("Polar SDK log:  \(str)")
+        //NSLog("Polar SDK log:  \(str)")
     }
 }
 
