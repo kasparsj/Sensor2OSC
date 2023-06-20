@@ -1,12 +1,13 @@
 package cc.kaspars.sensor2osc
 
+import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
 import android.hardware.Sensor
-import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
-import android.hardware.SensorManager
-import android.os.AsyncTask
+import android.os.Build
 import android.os.Bundle
+import android.os.IBinder
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -42,75 +43,58 @@ class PhoneSensorsFragment : Fragment() {
         private const val TAG = "PhoneSensorsFragment"
     }
 
-    private var accListener: SensorListener? = null
-    private var gyroListener: SensorListener? = null
-    private var magListener: SensorListener? = null
-    private var quatListener: QuatListener? = null
-    private var accSensor:Sensor? = null
-    private var gyroSensor:Sensor? = null
-    private var magSensor:Sensor? = null
-    private var quatSensor:Sensor? = null
-
-    private lateinit var sensorManager: SensorManager
     private lateinit var accButton: Button
     private lateinit var gyroButton: Button
     private lateinit var magButton: Button
     private lateinit var quatButton: Button
 
-    class SensorListener(private var context:Fragment, private var address: String, private var numArgs:Int) : SensorEventListener {
-
-        override fun onSensorChanged(event: SensorEvent) {
-            val samples = arrayListOf<Int>()
-            for (i in 0..(numArgs-1)) {
-                samples.add(event.values[i].toInt());
-            }
-            (context as PhoneSensorsFragment).sendMessage(address, samples)
+    private var sensorService: SensorService? = null
+    private var isBound = false
+    private val connection = object : ServiceConnection {
+        override fun onServiceConnected(className: ComponentName, service: IBinder) {
+            val binder = service as SensorService.LocalBinder
+            sensorService = binder.getService()
+            isBound = true
         }
 
-        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-            //TODO: we'll see later about it
-        }
-    }
-
-    class QuatListener(private var context:Fragment, private var address: String) : SensorEventListener {
-
-        override fun onSensorChanged(event: SensorEvent) {
-            val quat = FloatArray(4);
-            SensorManager.getQuaternionFromVector(quat, event.values)
-
-            val samples = arrayListOf<Float>()
-            samples.add(quat.get(1))
-            samples.add(quat.get(2))
-            samples.add(quat.get(3))
-            samples.add(quat.get(0))
-
-            (context as PhoneSensorsFragment).sendMessage(address, samples)
-        }
-
-        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-            //TODO: we'll see later about it
+        override fun onServiceDisconnected(arg0: ComponentName) {
+            isBound = false
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        arguments?.let {
-//            param1 = it.getInt(ARG_PARAM1)
-//            param2 = it.getString(ARG_PARAM2)
-//        }
-        sensorManager = (activity as MainActivity).getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        accSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-        gyroSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
-        magSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
-        quatSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
     }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+
+        startSensorService();
+
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_phone_sensors, container, false)
+    }
+
+    private fun startSensorService() {
+        val serviceIntent = Intent(context, SensorService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context?.startForegroundService(serviceIntent)
+        } else {
+            context?.startService(serviceIntent)
+        }
+        context?.bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        stopSensorService()
+    }
+
+    private fun stopSensorService() {
+        val serviceIntent = Intent(context, SensorService::class.java)
+        context?.stopService(serviceIntent)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -122,7 +106,7 @@ class PhoneSensorsFragment : Fragment() {
         quatButton = view.findViewById(R.id.quat_button)
 
         accButton.setOnClickListener {
-            if (magSensor == null) {
+            if (hasSensor(Sensor.TYPE_ACCELEROMETER) == false) {
                 Toast.makeText(
                     requireActivity().applicationContext,
                     "There is no accelerometer on your device",
@@ -130,19 +114,16 @@ class PhoneSensorsFragment : Fragment() {
                 ).show()
                 return@setOnClickListener
             }
-            if (accListener == null) {
-                accListener = SensorListener(this, "/acc", 3)
-                sensorManager.registerListener(accListener, accSensor, SensorManager.SENSOR_DELAY_GAME)
+            if (toggleSensorListener(Sensor.TYPE_ACCELEROMETER) == true) {
                 toggleButtonDown(accButton, R.string.stop_acc_stream)
-            } else {
-                sensorManager.unregisterListener(accListener)
-                accListener = null
+            }
+            else {
                 toggleButtonUp(accButton, R.string.start_acc_stream)
             }
         }
 
         gyroButton.setOnClickListener {
-            if (magSensor == null) {
+            if (hasSensor(Sensor.TYPE_GYROSCOPE) == false) {
                 Toast.makeText(
                     requireActivity().applicationContext,
                     "There is no gyroscope on your device",
@@ -150,18 +131,16 @@ class PhoneSensorsFragment : Fragment() {
                 ).show()
                 return@setOnClickListener
             }
-            if (gyroListener == null) {
-                gyroListener = SensorListener(this, "/gyro", 3)
-                sensorManager.registerListener(gyroListener, gyroSensor, SensorManager.SENSOR_DELAY_GAME)
+            if (toggleSensorListener(Sensor.TYPE_MAGNETIC_FIELD) == true) {
                 toggleButtonDown(gyroButton, R.string.stop_gyro_stream)
-            } else {
-                sensorManager.unregisterListener(gyroListener)
+            }
+            else {
                 toggleButtonUp(gyroButton, R.string.start_gyro_stream)
             }
         }
 
         magButton.setOnClickListener {
-            if (magSensor == null) {
+            if (hasSensor(Sensor.TYPE_MAGNETIC_FIELD) == false) {
                 Toast.makeText(
                     requireActivity().applicationContext,
                     "There is no magnetometer on your device",
@@ -169,18 +148,16 @@ class PhoneSensorsFragment : Fragment() {
                 ).show()
                 return@setOnClickListener
             }
-            if (magListener == null) {
-                magListener = SensorListener(this, "/mag", 3)
-                sensorManager.registerListener(magListener, magSensor, SensorManager.SENSOR_DELAY_GAME)
+            if (toggleSensorListener(Sensor.TYPE_MAGNETIC_FIELD) == true) {
                 toggleButtonDown(magButton, R.string.stop_mag_stream)
-            } else {
+            }
+            else {
                 toggleButtonUp(magButton, R.string.start_mag_stream)
-                sensorManager.unregisterListener(magListener)
             }
         }
 
         quatButton.setOnClickListener {
-            if (quatSensor == null) {
+            if (hasSensor(Sensor.TYPE_ROTATION_VECTOR) == false) {
                 Toast.makeText(
                     requireActivity().applicationContext,
                     "There is no rotation_vector on your device",
@@ -188,27 +165,17 @@ class PhoneSensorsFragment : Fragment() {
                 ).show()
                 return@setOnClickListener
             }
-            if (quatListener == null) {
-                quatListener = QuatListener(this, "/quat")
-                sensorManager.registerListener(quatListener, quatSensor, SensorManager.SENSOR_DELAY_GAME)
+            if (toggleSensorListener(Sensor.TYPE_ROTATION_VECTOR) == true) {
                 toggleButtonDown(quatButton, R.string.stop_quat_stream)
-            } else {
+            }
+            else {
                 toggleButtonUp(quatButton, R.string.start_quat_stream)
-                sensorManager.unregisterListener(quatListener)
             }
         }
     }
 
-    private fun toggleButtonDown(button: Button, text: String? = null) {
-        toggleButton(button, true, text)
-    }
-
     private fun toggleButtonDown(button: Button, @StringRes resourceId: Int) {
         toggleButton(button, true, getString(resourceId))
-    }
-
-    private fun toggleButtonUp(button: Button, text: String? = null) {
-        toggleButton(button, false, text)
     }
 
     private fun toggleButtonUp(button: Button, @StringRes resourceId: Int) {
@@ -228,9 +195,17 @@ class PhoneSensorsFragment : Fragment() {
         button.background = buttonDrawable
     }
 
-    fun sendMessage(address:String, args: List<Any>? = null) {
-        AsyncTask.execute {
-            (activity as MainActivity).sendMessage(address, android.os.Build.MODEL, args = args)
+    private fun hasSensor(type:Int): Boolean? {
+        if (isBound) {
+            return sensorService?.hasSensor(type);
         }
+        return null;
+    }
+
+    private fun toggleSensorListener(type:Int):Boolean? {
+        if (isBound) {
+            return sensorService?.toggleSensorListener(type)
+        }
+        return null;
     }
 }

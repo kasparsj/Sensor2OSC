@@ -1,10 +1,9 @@
 package cc.kaspars.sensor2osc
 
-import android.content.Context
-import android.content.DialogInterface
+import android.content.*
+import android.os.AsyncTask
 import android.os.Bundle
 import android.text.InputType
-import android.util.Log
 import android.util.Patterns
 import android.view.View
 import android.widget.Button
@@ -14,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentPagerAdapter
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.viewpager.widget.ViewPager
 import com.google.android.material.snackbar.Snackbar
 import com.illposed.osc.OSCMessage
@@ -38,6 +38,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var setOscPortButton: Button
     private lateinit var setOscPrefixButton: Button
 
+    private lateinit var receiver: BroadcastReceiver
     private var sender: OSCPortOut? = null
 
     class MyPagerAdapter(fragmentManager: FragmentManager?) :
@@ -71,6 +72,16 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                val address = intent.getStringExtra("address")
+                val args = intent.getFloatArrayExtra("args")
+                sendMessage(address, android.os.Build.MODEL, args?.asList())
+            }
+        }
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(receiver, IntentFilter(SensorService.ACTION_SEND_MESSAGE))
 
         val vpPager = findViewById<View>(R.id.viewpager) as ViewPager
         adapterViewPager = MyPagerAdapter(supportFragmentManager)
@@ -155,6 +166,7 @@ class MainActivity : AppCompatActivity() {
 
     public override fun onDestroy() {
         super.onDestroy()
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(receiver)
         sender?.close()
     }
 
@@ -192,18 +204,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun sendMessage(address: String, deviceId:String, args: List<Any>? = null) {
-        //Log.d(TAG, "sendMessage - address: $address - args: $args")
-//        Completable
-//            .fromCallable {
-                val args1 = args?.toMutableList()
-                args1?.add(0, deviceId)
-                sendOSCMessage(oscPrefix + address, args1)
-//            }
-//            .subscribeOn(Schedulers.io())
-//            .subscribe()
-//            .addTo(compositeDisposable)
+    fun sendMessage(address: String?, deviceId:String, args: List<Any>? = null) {
+        val args1 = args?.toMutableList()
+        args1?.add(0, deviceId)
+        AsyncTask.execute {
+            sendOSCMessage(oscPrefix + address, args1)
+        }
     }
+
 
     private fun sendOSCMessage(address: String, args: List<Any>?) {
         val msg = OSCMessage(address, args)
