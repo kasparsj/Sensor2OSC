@@ -1,4 +1,4 @@
-# Sensor to OSC mobile app (iOS and Android)
+# Sensor to OSC mobile app for iOS and Android
 
 Android app to stream data from various Android and Polar BLE sensors to OSC
 
