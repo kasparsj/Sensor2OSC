@@ -15,6 +15,12 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+<!--            <Button-->
+<!--                android:id="@+id/set_osc_prefix_button"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="@string/set_osc_prefix" />-->
+
             <Button
                 android:id="@+id/acc_button"
                 android:layout_width="match_parent"
