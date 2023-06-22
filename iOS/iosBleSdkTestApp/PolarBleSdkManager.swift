@@ -78,7 +78,7 @@ class PolarBleSdkManager : ObservableObject {
     
     public static var oscPrefix:String {
         get {
-           return UserDefaults.standard.string(forKey: "oscPrefix") ?? "/polar"
+            return UserDefaults.standard.string(forKey: "oscPrefix") ?? (deviceId != "" ? ("/" + deviceId) : "/polar")
         }
         set(newValue) {
             UserDefaults.standard.set(newValue, forKey: "oscPrefix")
@@ -293,8 +293,7 @@ class PolarBleSdkManager : ObservableObject {
                     switch e {
                     case .next(let data):
                         var message = OSCMessage(
-                            OSCAddressPattern(PolarBleSdkManager.oscPrefix + "/ecg"),
-                            deviceId
+                            OSCAddressPattern(PolarBleSdkManager.oscPrefix + "/ecg")
                         )
                         for item in data.samples {
                             message.add(Int(item.voltage))
@@ -322,15 +321,13 @@ class PolarBleSdkManager : ObservableObject {
     func accStreamStart(settings: PolarBleSdk.PolarSensorSetting) {
         if case .connected(let deviceId) = deviceConnectionState {
             isAccStreamOn = true
-            NSLog("ACC stream start: \(deviceId)")
             accDisposable = api.startAccStreaming(deviceId, settings: settings)
                 .observe(on: MainScheduler.instance)
                 .subscribe{ e in
                     switch e {
                     case .next(let data):
                         var message = OSCMessage(
-                            OSCAddressPattern(PolarBleSdkManager.oscPrefix + "/acc"),
-                            deviceId
+                            OSCAddressPattern(PolarBleSdkManager.oscPrefix + "/acc")
                         )
                         for item in data.samples {
                             message.add(Int(item.x))
@@ -367,8 +364,7 @@ class PolarBleSdkManager : ObservableObject {
                     switch e {
                     case .next(let data):
                         var message = OSCMessage(
-                            OSCAddressPattern(PolarBleSdkManager.oscPrefix + "/mag"),
-                            deviceId
+                            OSCAddressPattern(PolarBleSdkManager.oscPrefix + "/mag")
                         )
                         for item in data.samples {
                             message.add(Int(item.x))
@@ -404,8 +400,7 @@ class PolarBleSdkManager : ObservableObject {
                     switch e {
                     case .next(let data):
                         var message = OSCMessage(
-                            OSCAddressPattern(PolarBleSdkManager.oscPrefix + "/gyro"),
-                            deviceId
+                            OSCAddressPattern(PolarBleSdkManager.oscPrefix + "/gyro")
                         )
                         for item in data.samples {
                             message.add(Int(item.x))
@@ -776,7 +771,6 @@ extension PolarBleSdkManager : PolarBleApiDeviceHrObserver {
     func hrValueReceived(_ identifier: String, data: PolarHrData) {
         var message = OSCMessage(
             OSCAddressPattern(PolarBleSdkManager.oscPrefix + "/hr"),
-            PolarBleSdkManager.deviceId,
             Int(data.hr)
         )
         message.add(data.rrsMs)

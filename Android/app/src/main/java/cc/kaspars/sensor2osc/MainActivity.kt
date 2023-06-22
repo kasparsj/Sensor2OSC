@@ -27,16 +27,15 @@ class MainActivity : AppCompatActivity() {
         private const val TAG = "MainActivity"
         private const val ZERO_IP = "0.0.0.0"
         private const val DEFAULT_OSC_PORT = 57120
-        private const val DEFAULT_OSC_PREFIX = "/sensor"
     }
 
     var adapterViewPager: FragmentPagerAdapter? = null
     private var oscIp: String = ZERO_IP
     private var oscPort: Int = DEFAULT_OSC_PORT
-    private var oscPrefix: String = DEFAULT_OSC_PREFIX
+    //private var oscPrefix: String = DEFAULT_OSC_PREFIX
     private lateinit var setOscIpButton: Button
     private lateinit var setOscPortButton: Button
-    private lateinit var setOscPrefixButton: Button
+    //private lateinit var setOscPrefixButton: Button
 
     private lateinit var receiver: BroadcastReceiver
     private var sender: OSCPortOut? = null
@@ -89,7 +88,7 @@ class MainActivity : AppCompatActivity() {
 
         setOscIpButton = findViewById(R.id.set_osc_ip_button)
         setOscPortButton = findViewById(R.id.set_osc_port_button)
-        setOscPrefixButton = findViewById(R.id.set_osc_prefix_button)
+        //setOscPrefixButton = findViewById(R.id.set_osc_prefix_button)
 
         val sharedPref = getPreferences(MODE_PRIVATE) ?: return
         oscIp = sharedPref.getString(getString(R.string.saved_osc_ip_key), oscIp).toString()
@@ -142,26 +141,26 @@ class MainActivity : AppCompatActivity() {
             initSender(oscIp, oscPort)
         }
 
-        oscPrefix = sharedPref.getString(getString(R.string.saved_osc_prefix_key), oscPrefix).toString()
-        setOscPrefixButton.text = getString(R.string.set_osc_prefix, oscPrefix)
-        setOscPrefixButton.setOnClickListener {
-            val builder: AlertDialog.Builder = AlertDialog.Builder(this)
-            builder.setTitle("Enter OSC prefix")
-
-            val input = EditText(this)
-            input.setHint(DEFAULT_OSC_PREFIX)
-            input.setText(oscPrefix)
-            input.inputType = InputType.TYPE_CLASS_TEXT
-            builder.setView(input)
-
-            builder.setPositiveButton("OK", DialogInterface.OnClickListener { dialog, which ->
-                oscPrefix = input.text.toString()
-                setOscPrefixButton.text = getString(R.string.set_osc_prefix, oscPrefix)
-            })
-            builder.setNegativeButton("Cancel", DialogInterface.OnClickListener { dialog, which -> dialog.cancel() })
-
-            builder.show()
-        }
+//        oscPrefix = sharedPref.getString(getString(R.string.saved_osc_prefix_key), oscPrefix).toString()
+//        setOscPrefixButton.text = getString(R.string.set_osc_prefix, oscPrefix)
+//        setOscPrefixButton.setOnClickListener {
+//            val builder: AlertDialog.Builder = AlertDialog.Builder(this)
+//            builder.setTitle("Enter OSC prefix")
+//
+//            val input = EditText(this)
+//            input.setHint(DEFAULT_OSC_PREFIX)
+//            input.setText(oscPrefix)
+//            input.inputType = InputType.TYPE_CLASS_TEXT
+//            builder.setView(input)
+//
+//            builder.setPositiveButton("OK", DialogInterface.OnClickListener { dialog, which ->
+//                oscPrefix = input.text.toString()
+//                setOscPrefixButton.text = getString(R.string.set_osc_prefix, oscPrefix)
+//            })
+//            builder.setNegativeButton("Cancel", DialogInterface.OnClickListener { dialog, which -> dialog.cancel() })
+//
+//            builder.show()
+//        }
     }
 
     public override fun onDestroy() {
@@ -176,14 +175,14 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    fun disableAllButtons() {
-        setOscPrefixButton.isEnabled = false
-    }
-
-    fun enableAllButtons() {
-        setOscPrefixButton.isEnabled = true
-    }
-
+//    fun disableAllButtons() {
+//        setOscPrefixButton.isEnabled = false
+//    }
+//
+//    fun enableAllButtons() {
+//        setOscPrefixButton.isEnabled = true
+//    }
+//
     private fun initSender(ip: String, port: Int) {
         val isIpAddressValid = Patterns.IP_ADDRESS.matcher(ip).matches()
         return if (isIpAddressValid) {
@@ -205,10 +204,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun sendMessage(address: String?, deviceId:String, args: List<Any>? = null) {
-        val args1 = args?.toMutableList()
-        args1?.add(0, deviceId)
         AsyncTask.execute {
-            sendOSCMessage(oscPrefix + address, args1)
+            sendOSCMessage("/" + deviceId + address, args)
         }
     }
 
