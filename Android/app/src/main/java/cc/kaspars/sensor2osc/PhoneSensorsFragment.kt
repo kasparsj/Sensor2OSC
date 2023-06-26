@@ -131,7 +131,7 @@ class PhoneSensorsFragment : Fragment() {
                 ).show()
                 return@setOnClickListener
             }
-            if (toggleSensorListener(Sensor.TYPE_MAGNETIC_FIELD) == true) {
+            if (toggleSensorListener(Sensor.TYPE_GYROSCOPE) == true) {
                 toggleButtonDown(gyroButton, R.string.stop_gyro_stream)
             }
             else {
