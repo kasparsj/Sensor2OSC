@@ -1,4 +1,4 @@
-# Sensor to OSC Android app
+# Sensor to OSC mobile app for iOS and Android
 
 Android app to stream data from various Android and Polar BLE sensors to OSC
 
@@ -10,21 +10,21 @@ Based on [androidBleSdkTestApp](https://github.com/polarofficial/polar-ble-sdk/t
 
 These streams are implemented in the app (not all might be supported by your device):
 
-`/sensor/hr` Heart rate stream
+`/deviceId/hr` Heart rate stream
 
-`/sensor/ecg` ECG stream
+`/deviceId/ecg` ECG stream
 
-`/sensor/acc` Accelerometer stream
+`/deviceId/acc` Accelerometer stream
 
-`/sensor/gyro` Gyroscope stream
+`/deviceId/gyro` Gyroscope stream
 
-`/sensor/mag` Magnetometer stream
+`/deviceId/mag` Magnetometer stream
 
-`/sensor/ppg` PPG stream
+`/deviceId/ppg` PPG stream
 
-`/sensor/ppi` PPI stream
+`/deviceId/ppi` PPI stream
 
-The "/sensor" prefix can be changed.
+The "/deviceId" prefix will be automatically set and can be changed manually.
 
 ## Screenshots
 
