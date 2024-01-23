@@ -4,7 +4,7 @@ Android app to stream data from various Android and Polar BLE sensors to OSC
 
 Mostly tested with Polar H10 (ECG and Accelerometer streams)
 
-Based on [androidBleSdkTestApp](https://github.com/polarofficial/polar-ble-sdk/tree/master/examples/example-android/androidBleSdkTestApp) from [polar-ble-sdk](https://github.com/polarofficial/polar-ble-sdk)
+Based on the [polar-ble-sdk](https://github.com/polarofficial/polar-ble-sdk)
 
 ## Available OSC streams
 
