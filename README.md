@@ -10,21 +10,21 @@ Based on the [polar-ble-sdk](https://github.com/polarofficial/polar-ble-sdk)
 
 These streams are implemented in the app (not all might be supported by your device):
 
-`/deviceId/hr` Heart rate stream
+`/oscPrefix/hr` Heart rate stream
 
-`/deviceId/ecg` ECG stream
+`/oscPrefix/ecg` ECG stream
 
-`/deviceId/acc` Accelerometer stream
+`/oscPrefix/acc` Accelerometer stream
 
-`/deviceId/gyro` Gyroscope stream
+`/oscPrefix/gyro` Gyroscope stream
 
-`/deviceId/mag` Magnetometer stream
+`/oscPrefix/mag` Magnetometer stream
 
-`/deviceId/ppg` PPG stream
+`/oscPrefix/ppg` PPG stream
 
-`/deviceId/ppi` PPI stream
+`/oscPrefix/ppi` PPI stream
 
-The "/deviceId" prefix will be automatically set and can be changed manually.
+The "/oscPrefix" prefix will be automatically set and can be changed manually.
 
 ## Screenshots
 
