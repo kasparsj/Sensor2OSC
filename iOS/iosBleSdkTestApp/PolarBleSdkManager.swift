@@ -723,13 +723,21 @@ class PolarBleSdkManager : ObservableObject {
                     switch e {
                     case .next(let data):
                         if(data.type == PpgDataType.ppg3_ambient1) {
+                            var message = OSCMessage(
+                                OSCAddressPattern(PolarBleSdkManager.oscPrefix + "/ppg")
+                            )
                             if let fileHandle = logFile?.fileHandle {
                                 self.writeOnlineStreamLogFile(fileHandle, data)
                             }
                             
                             for item in data.samples {
-                                NSLog("PPG  ppg0: \(item.channelSamples[0]) ppg1: \(item.channelSamples[1]) ppg2: \(item.channelSamples[2]) ambient: \(item.channelSamples[3]) timeStamp: \(item.timeStamp)")
+                                message.add(Int(item.channelSamples[0]))
+                                message.add(Int(item.channelSamples[1]))
+                                message.add(Int(item.channelSamples[2]))
+                                message.add(Int(item.channelSamples[3]))
+                                //NSLog("PPG  ppg0: \(item.channelSamples[0]) ppg1: \(item.channelSamples[1]) ppg2: \(item.channelSamples[2]) ambient: \(item.channelSamples[3]) timeStamp: \(item.timeStamp)")
                             }
+                            self.client.send(message)
                         }
                     case .error(let err):
                         NSLog("PPG stream failed: \(err)")
@@ -766,13 +774,20 @@ class PolarBleSdkManager : ObservableObject {
                 .subscribe{ e in
                     switch e {
                     case .next(let data):
+                        var message = OSCMessage(
+                            OSCAddressPattern(PolarBleSdkManager.oscPrefix + "/ppi")
+                        )
                         if let fileHandle = logFile?.fileHandle {
                             self.writeOnlineStreamLogFile(fileHandle, data)
                         }
                         
                         for item in data.samples {
-                            NSLog("PPI    PeakToPeak(ms): \(item.ppInMs) sample.blockerBit: \(item.blockerBit)  errorEstimate: \(item.ppErrorEstimate)")
+                            message.add(Int(item.ppInMs))
+                            message.add(Int(item.blockerBit))
+                            message.add(Int(item.ppErrorEstimate))
+                            //NSLog("PPI    PeakToPeak(ms): \(item.ppInMs) sample.blockerBit: \(item.blockerBit)  errorEstimate: \(item.ppErrorEstimate)")
                         }
+                        self.client.send(message)
                     case .error(let err):
                         NSLog("PPI stream failed: \(err)")
                         if let fileHandle = logFile?.fileHandle {
