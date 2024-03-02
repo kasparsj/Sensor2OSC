@@ -27,8 +27,6 @@ struct ContentView: View {
     @State private var oscIp = "localhost"
     @State private var showPortAlert = false
     @State private var oscPort = "8080"
-    @State private var showPrefixAlert = false
-    @State private var oscPrefix = "/polar"
     
     var body: some View {
         VStack {
@@ -74,21 +72,6 @@ struct ContentView: View {
                         TextField("Enter Port number", text: $oscPort)
                             .keyboardType(.numberPad)
                         Button("OK", action: setOscPort)
-                        Button("Cancel", role: .cancel) { }
-                    }
-            
-                    Button(action: {
-                        showPrefixAlert.toggle()
-                    }) {
-                        Text("OSC Prefix " + oscPrefix)
-                    }
-                    .onAppear {
-                        oscPrefix = PolarBleSdkManager.oscPrefix
-                    }
-                    .buttonStyle(PrimaryButtonStyle(buttonState: ButtonState.released))
-                    .alert("OSC Prefix", isPresented: $showPrefixAlert) {
-                        TextField("Enter OSC prefix", text: $oscPrefix)
-                        Button("OK", action: setOscPrefix)
                         Button("Cancel", role: .cancel) { }
                     }
                 }
@@ -155,10 +138,6 @@ struct ContentView: View {
     func setOscPort() {
         PolarBleSdkManager.oscPort = Int(oscPort) ?? 8080
         bleSdkManager.initClient()
-    }
-    
-    func setOscPrefix() {
-        PolarBleSdkManager.oscPrefix = oscPrefix
     }
     
     func getConnectButtonState() -> ButtonState {

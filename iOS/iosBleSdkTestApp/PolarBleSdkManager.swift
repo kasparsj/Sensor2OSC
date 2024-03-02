@@ -85,7 +85,9 @@ class PolarBleSdkManager : ObservableObject {
     
     public static var oscPrefix:String {
         get {
-            return UserDefaults.standard.string(forKey: "oscPrefix") ?? (deviceId != "" ? ("/" + deviceId) : "/polar")
+            // disabled changing oscPrefix
+            //return UserDefaults.standard.string(forKey: "oscPrefix") ?? (deviceId != "" ? ("/" + deviceId) : "/polar")
+            return (deviceId != "" ? ("/" + deviceId) : "/polar");
         }
         set(newValue) {
             UserDefaults.standard.set(newValue, forKey: "oscPrefix")
