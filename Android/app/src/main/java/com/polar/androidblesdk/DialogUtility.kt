@@ -1,4 +1,4 @@
-package cc.kaspars.sensor2osc
+package com.polar.androidblesdk
 
 import android.app.Activity
 import android.app.Dialog
